@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec3 vNormal;
+attribute  vec2 vTextCoords;
+
+varying vec2 fTextCoords;
+varying vec3 normal, light, eye;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightDirection;
+
+void main()
+{
+    fTextCoords = 0.5 * vTextCoords;
+
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+
+    light = normalize( lightDirection.xyz - pos );
+
+    eye =  -normalize(pos);
+	
+	vec4 NN = vec4(vNormal,0);
+
+    // Transform vertex normal into eye coordinates
+
+    normal = normalize( (modelViewMatrix*NN).xyz);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+}
+
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform float shininess;
+varying vec3 normal, light, eye;
+
+varying vec2 fTextCoords;
+uniform sampler2D textMap;
+
+void main()
+{
+    vec4 fColor;
+
+    vec3 H = normalize( light + eye );
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(light, normal), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(normal, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+
+    if( dot(light, normal) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse +specular;
+    fColor.a = 1.0;
+
+    gl_FragColor = fColor * texture2D(textMap, fTextCoords);
+}
+
+</script>
+
+<script type="text/javascript" src="Common/webgl-utils.js"></script>
+<script type="text/javascript" src="Common/initShaders.js"></script>
+<script type="text/javascript" src="Common/MV.js"></script>
+<script type="text/javascript" src="script.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="700" height="700">
+    Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+
+
+<div id="selectionDiv" style="width:350px;height:110px;background:antiquewhite"
+     onmouseover="this.style.background='burlywood';"
+     onmouseout="this.style.background='antiquewhite';">
+
+    <div id="xDiv">
+        <input type="radio" id="x" name="selectionX" value="1">
+        <label for="x">Rotate Around X</label>
+    </div>
+
+    <div id="yDiv">
+        <input type="radio" id="y" name="selectionY" value="2">
+        <label for="y">Rotate Around Y</label>
+    </div>
+
+    <div id="zDiv">
+        <input type="radio" id="z" name="selectionZ" value="3">
+        <label for="z">Rotate Around Z</label>
+    </div>
+
+    <div id="stopDiv">
+        <input type="radio" id="stop" name="selection" value="0"
+               checked>
+        <label for="stop">Stop Rotation</label>
+    </div>
+
+</div>
+
+<div id="singleRotationDiv" style="width:350px;height:50px;background:antiquewhite"
+     onmouseover="this.style.background='burlywood';"
+     onmouseout="this.style.background='antiquewhite';">
+
+    <div id="singleXDiv">
+        <button id="xRotate">
+            Rotate X Once
+        </button>
+    </div>
+
+    <div id="singleYDiv">
+        <button id="yRotate">
+            Rotate Y Once
+        </button>
+    </div>
+
+    <div id="singleZDiv">
+        <button id="zRotate">
+            Rotate Z Once
+        </button>
+    </div>
+
+</div>
+
+<div id="drawingSelectionDiv" style="width:350px;height:70px;background:antiquewhite"
+     onmouseover="this.style.background='burlywood';"
+     onmouseout="this.style.background='antiquewhite';">
+
+    <div id="linesDiv">
+        <input type="radio" id="withLine" name="drawSelection" value="1">
+        <label for="withLine">Draw With Lines</label>
+    </div>
+
+    <div id="polygonsDiv">
+        <input type="radio" id="withPolygon" name="drawSelection" value="2" checked>
+        <label for="withPolygon">Draw With Polygons</label>
+    </div>
+
+</div>
+
+
+</body>
+</html>
